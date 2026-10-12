@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="kk" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Жай итерация әдісі - СТЖ шешудің сандық әдістері</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js for interactive visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(51, 65, 85, 0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 font-sans transition-colors duration-300 min-h-screen flex flex-col">
+
+    <nav class="sticky top-0 z-50 glass-card shadow-sm border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-md">
+                        <i class="fa-solid fa-calculator text-lg"></i>
+                    </div>
+                    <span class="font-bold text-lg sm:text-xl bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Жай Итерация Әдісі</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-6 text-sm font-medium">
+                    <a href="#theory" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Теория</a>
+                    <a href="#example" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Мысал есеп</a>
+                    <a href="#solver" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Интерактивті есептеуіш</a>
+                    <a href="#cpp" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition">C++ & Блок-схема</a>
+                    <a href="#quiz" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition">Квиз-ойын</a>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="themeToggle" class="p-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 transition" aria-label="Тақырыпты өзгерту">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:block"></i>
+                    </button>
+                    <!-- Mobile Menu Button -->
+                    <button id="mobileMenuBtn" class="md:hidden p-2 rounded-lg bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Dropdown -->
+        <div id="mobileMenu" class="hidden md:hidden px-4 pt-2 pb-4 space-y-2 border-t border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95">
+            <a href="#theory" class="block py-2 hover:text-indigo-600">Теория</a>
+            <a href="#example" class="block py-2 hover:text-indigo-600">Мысал есеп</a>
+            <a href="#solver" class="block py-2 hover:text-indigo-600">Интерактивті есептеуіш</a>
+            <a href="#cpp" class="block py-2 hover:text-indigo-600">C++ & Блок-схема</a>
+            <a href="#quiz" class="block py-2 hover:text-indigo-600">Квиз-ойын</a>
+        </div>
+    </nav>
+
+    <header class="relative overflow-hidden py-20 lg:py-28 bg-gradient-to-b from-indigo-50/50 via-slate-50 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 dark:bg-indigo-900/60 dark:text-indigo-300 mb-6 shadow-sm">
+                <i class="fa-solid fa-graduation-cap mr-2"></i> 3 курс студенттеріне арналған білім беру модулі
+            </span>
+            <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white max-w-4xl mx-auto leading-tight">
+                Сызықтық алгебралық теңдеулер жүйесін <span class="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Жай итерация әдісімен</span> шешу
+            </h1>
+            <p class="mt-6 text-lg sm:text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+                Интерактивті теория, қадамдық мысалдар, визуализация, C++ коды және білімді тексеретін ойын тапсырмалары.
+            </p>
+            <div class="mt-10 flex flex-wrap justify-center gap-4">
+                <a href="#solver" class="px-8 py-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-500/25 transition transform hover:-translate-y-0.5">
+                    <i class="fa-solid fa-play mr-2"></i> Есептеуді бастау
+                </a>
+                <a href="#theory" class="px-8 py-4 rounded-xl glass-card hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold shadow-sm transition">
+                    <i class="fa-solid fa-book-open mr-2"></i> Теорияны оқу
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-20">
+
+        <section id="theory" class="scroll-mt-24 space-y-8">
+            <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+                <span class="text-indigo-600 dark:text-indigo-400 font-semibold text-sm uppercase tracking-wider">01 Бөлім</span>
+                <h2 class="text-3xl font-bold tracking-tight mt-1">Теориялық негіздер</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xl">
+                        <i class="fa-solid fa-network-wired"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold">Жүйенің матрицалық түрі</h3>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                        Сызықтық алгебралық теңдеулер жүйесі (СТЖ) берілген болсын: <br>
+                        <code class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">Ax = b</code> немесе итерациялық түрге келтірілген түрі: <br>
+                        <code class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">x = Bx + g</code>. Мұндағы B — итерация матрицасы.
+                    </p>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xl">
+                        <i class="fa-solid fa-check-double"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold">Жинақтылық шарты</h3>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                        Итерация процесі жинақты болуы үшін матрицаның нормасы 1-ден кіші болуы қажет: <br>
+                        <code class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">||B|| < 1</code>. Бұл диагностика диагональды басымдылық немесе бас диагональ элементтерінің үстемдігі арқылы қамтамасыз етіледі.
+                    </p>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-100 dark:bg-indigo-900/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center font-bold text-xl">
+                        <i class="fa-solid fa-stairs"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold">Алгоритм қадамдары</h3>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm leading-relaxed">
+                        1. Бастапқы жақындашуды таңдау (<span class="italic">x</span><sup>(0)</sup>).<br>
+                        2. Келесі итерацияны есептеу формулусы: <br>
+                        <code class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">x<sup>(k+1)</sup> = Bx<sup>(k)</sup> + g</code>.<br>
+                        3. Тоқтау шарты: <code class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded">||x<sup>(k+1)</sup> - x<sup>(k)</sup>|| < ε</code>.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="example" class="scroll-mt-24 space-y-8">
+            <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+                <span class="text-indigo-600 dark:text-indigo-400 font-semibold text-sm uppercase tracking-wider">02 Бөлім</span>
+                <h2 class="text-3xl font-bold tracking-tight mt-1">Мысал есеп (Толық шешімімен)</h2>
+            </div>
+
+            <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-sm space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-indigo-600 dark:text-indigo-400">Берілген жүйе:</h3>
+                    <div class="bg-slate-100 dark:bg-slate-800/80 p-4 rounded-xl mt-3 font-mono text-sm space-y-1">
+                        <p>10x₁ - 2x₂ - 2x₃ = 6</p>
+                        <p>-x₁ + 10x₂ - 2x₃ = 7</p>
+                        <p>-x₁ - x₁ + 10x₃ = 8  (немесе -x₁ - x₂ + 10x₃ = 8)</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-indigo-600 dark:text-indigo-400">Итерациялық түрге келтіру (x = Bx + g):</h3>
+                    <div class="bg-slate-100 dark:bg-slate-800/80 p-4 rounded-xl mt-3 font-mono text-sm space-y-1">
+                        <p>x₁^(k+1) = 0.2x₂^(k) + 0.2x₃^(k) + 0.6</p>
+                        <p>x₂^(k+1) = 0.1x₁^(k) + 0.2x₃^(k) + 0.7</p>
+                        <p>x₃^(k+1) = 0.1x₁^(k) + 0.1x₂^(k) + 0.8</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-indigo-600 dark:text-indigo-400">Есептеу қадамдары (ε = 0.001):</h3>
+                    <div class="overflow-x-auto mt-3">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                                    <th class="p-3 rounded-l-lg">k (қадам)</th>
+                                    <th class="p-3">x₁^(k)</th>
+                                    <th class="p-3">x₂^(k)</th>
+                                    <th class="p-3 rounded-r-lg">x₃^(k)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 dark:divide-slate-800 font-mono">
+                                <tr>
+                                    <td class="p-3 font-semibold text-indigo-600">0</td>
+                                    <td class="p-3">0.6000</td>
+                                    <td class="p-3">0.7000</td>
+                                    <td class="p-3">0.8000</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-indigo-600">1</td>
+                                    <td class="p-3">0.9000</td>
+                                    <td class="p-3">0.8600</td>
+                                    <td class="p-3">0.9300</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-indigo-600">2</td>
+                                    <td class="p-3">0.9580</td>
+                                    <td class="p-3">0.9150</td>
+                                    <td class="p-3">0.9760</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-indigo-600">3</td>
+                                    <td class="p-3">0.9782</td>
+                                    <td class="p-3">0.9334</td>
+                                    <td class="p-3">0.9873</td>
+                                </tr>
+                                <tr class="bg-indigo-50/50 dark:bg-indigo-950/30 font-bold">
+                                    <td class="p-3 text-indigo-600">... Жинақталды</td>
+                                    <td class="p-3">1.0000</td>
+                                    <td class="p-3">1.0000</td>
+                                    <td class="p-3">1.0000</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="solver" class="scroll-mt-24 space-y-8">
+            <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+                <span class="text-indigo-600 dark:text-indigo-400 font-semibold text-sm uppercase tracking-wider">03 Бөлім</span>
+                <h2 class="text-3xl font-bold tracking-tight mt-1">Интерактивті есептеуіш және Визуализация</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Control Panel -->
+                <div class="glass-card p-6 rounded-2xl shadow-sm space-y-6 lg:col-span-1">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa-solid fa-sliders text-indigo-600 mr-2"></i> Жүйе параметрлері
+                    </h3>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Өлшемі:</label>
+                        <select id="matrixSize" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="2">2 x 2 жүйе</option>
+                            <option value="3" selected>3 x 3 жүйе</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Дәлдік (ε):</label>
+                        <input type="number" id="epsilon" value="0.001" step="0.0001" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Максималды қадамдар:</label>
+                        <input type="number" id="maxIter" value="50" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Матрица коэффициенттері (A және b):</label>
+                        <div id="matrixInputs" class="space-y-3 font-mono text-sm">
+                            <!-- Dynamically generated via JS -->
+                        </div>
+                    </div>
+
+                    <button id="solveBtn" class="w-full py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-lg shadow-indigo-500/25 transition">
+                        <i class="fa-solid fa-play mr-2"></i> Жүйені шешу
+                    </button>
+                </div>
+
+                <!-- Results & Chart Panel -->
+                <div class="glass-card p-6 rounded-2xl shadow-sm space-y-6 lg:col-span-2 flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 flex items-center">
+                            <i class="fa-solid fa-chart-line text-indigo-600 mr-2"></i> Итерациялық процесс графы
+                        </h3>
+                        <div class="h-64 sm:h-80 w-full relative">
+                            <canvas id="iterationChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="mt-6">
+                        <h3 class="text-lg font-semibold mb-3">Қадамдар кестесі мен нәтиже</h3>
+                        <div id="solverStatus" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 mb-2"></div>
+                        <div class="overflow-x-auto max-h-60 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <table id="resultTable" class="w-full text-left border-collapse text-sm font-mono">
+                                <thead class="bg-slate-100 dark:bg-slate-800 sticky top-0">
+                                    <tr>
+                                        <th class="p-3">k</th>
+                                        <th class="p-3">x₁</th>
+                                        <th class="p-3">x₂</th>
+                                        <th class="p-3" id="x3Header">x₃</th>
+                                        <th class="p-3">max қателік</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="resultBody" class="divide-y divide-slate-200 dark:divide-slate-800">
+                                    <tr>
+                                        <td colspan="5" class="p-4 text-center text-slate-500">Есептеу үшін "Шешу" батырмасын басыңыз</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cpp" class="scroll-mt-24 space-y-8">
+            <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+                <span class="text-indigo-600 dark:text-indigo-400 font-semibold text-sm uppercase tracking-wider">04 Бөлім</span>
+                <h2 class="text-3xl font-bold tracking-tight mt-1">C++ коды және Блок-схема</h2>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Flowchart SVG -->
+                <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4 flex flex-col">
+                    <h3 class="text-xl font-semibold flex items-center">
+                        <i class="fa-solid fa-diagram-project text-indigo-600 mr-2"></i> Алгоритм блок-схемасы
+                    </h3>
+                    <p class="text-slate-600 dark:text-slate-300 text-sm">Жай итерация әдісінің логикалық құрылысы:</p>
+                    <div class="flex-grow flex items-center justify-center bg-slate-100 dark:bg-slate-800/60 p-4 rounded-xl">
+                        <svg class="w-full max-w-md h-auto" viewBox="0 0 300 450" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Start -->
+                            <rect x="75" y="10" width="150" height="40" rx="20" class="fill-indigo-600"/>
+                            <text x="150" y="35" fill="white" font-size="12" font-weight="bold" text-anchor="middle">Бастау (Start)</text>
+                            <path d="M150 50 V75" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+
+                            <!-- Input -->
+                            <polygon points="50,75 250,75 230,125 70,125" class="fill-slate-200 dark:fill-slate-700 stroke-indigo-500" stroke-width="2"/>
+                            <text x="150" y="104" class="fill-slate-800 dark:fill-slate-200" font-size="11" text-anchor="middle">A, b, ε, x₀ енгізу</text>
+                            <path d="M150 125 V150" stroke="currentColor" stroke-width="2"/>
+
+                            <!-- Iteration Step -->
+                            <rect x="60" y="150" width="180" height="50" rx="8" class="fill-slate-200 dark:fill-slate-700 stroke-indigo-500" stroke-width="2"/>
+                            <text x="150" y="172" class="fill-slate-800 dark:fill-slate-200" font-size="11" text-anchor="middle">x^(k+1) = Bx^(k) + g</text>
+                            <text x="150" y="188" class="fill-slate-800 dark:fill-slate-200" font-size="10" text-anchor="middle">есептеу</text>
+                            <path d="M150 200 V230" stroke="currentColor" stroke-width="2"/>
+
+                            <!-- Condition -->
+                            <polygon points="150,230 230,270 150,310 70,270" class="fill-slate-200 dark:fill-slate-700 stroke-indigo-500" stroke-width="2"/>
+                            <text x="150" y="267" class="fill-slate-800 dark:fill-slate-200" font-size="10" text-anchor="middle">||x^(k+1)-x^(k)|| < ε</text>
+                            <text x="150" y="281" class="fill-slate-800 dark:fill-slate-200" font-size="9" text-anchor="middle">шарты орындалды ма?</text>
+                            
+                            <!-- No branch loops back -->
+                            <path d="M70 270 H30 V175 H60" stroke="currentColor" stroke-width="2" fill="none"/>
+                            <text x="45" y="220" class="fill-indigo-600 dark:fill-indigo-400" font-size="10" font-weight="bold">Жоқ</text>
+
+                            <!-- Yes branch goes to output -->
+                            <path d="M150 310 V350" stroke="currentColor" stroke-width="2"/>
+                            <text x="160" y="335" class="fill-indigo-600 dark:fill-indigo-400" font-size="10" font-weight="bold">Иә</text>
+
+                            <!-- Output -->
+                            <polygon points="50,350 250,350 230,400 70,400" class="fill-slate-200 dark:fill-slate-700 stroke-indigo-500" stroke-width="2"/>
+                            <text x="150" y="381" class="fill-slate-800 dark:fill-slate-200" font-size="11" text-anchor="middle">x мәнін шығару</text>
+                            <path d="M150 400 V420" stroke="currentColor" stroke-width="2"/>
+
+                            <!-- End -->
+                            <rect x="75" y="420" width="150" height="25" rx="12.5" class="fill-indigo-600"/>
+                            <text x="150" y="437" fill="white" font-size="11" font-weight="bold" text-anchor="middle">Соңы (End)</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- C++ Code Block -->
+                <div class="glass-card p-6 rounded-2xl shadow-sm space-y-4 flex flex-col">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-semibold flex items-center">
+                            <i class="fa-solid fa-code text-indigo-600 mr-2"></i> C++ Бағдарлама коды
+                        </h3>
+                        <button id="copyCodeBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300 hover:bg-indigo-200 transition">
+                            <i class="fa-regular fa-copy mr-1"></i> Кодты көшіру
+                        </button>
+                    </div>
+                    <div class="bg-slate-900 text-slate-200 p-4 rounded-xl font-mono text-xs overflow-x-auto flex-grow max-h-96">
+                        <pre><code id="cppCodeText">#iostream
+#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cmath&gt;
+
+using namespace std;
+
+int main() {
+    int n = 3;
+    double eps = 0.001;
+    // Коэффициенттер матрицасы мен бос мүшелер
+    vector&lt;vector&lt;double&gt;&gt; A = {
+        {10, -2, -2},
+        {-1, 10, -2},
+        {-1, -1, 10}
+    };
+    vector&lt;double&gt; b = {6, 7, 8};
+    vector&lt;double&gt; x(n, 0.0);
+    vector&lt;double&gt; x_new(n, 0.0);
+    
+    int iter = 0;
+    double diff;
+    
+    do {
+        diff = 0.0;
+        for (int i = 0; i &lt; n; i++) {
+            double sum = 0.0;
+            for (int j = 0; j &lt; n; j++) {
+                if (i != j) sum += (A[i][j] / A[i][i]) * x[j];
+            }
+            x_new[i] = (b[i] / A[i][i]) - sum;
+            diff = max(diff, fabs(x_new[i] - x[i]));
+        }
+        x = x_new;
+        iter++;
+    } while (diff &gt; eps && iter &lt; 100);
+    
+    cout &lt;&lt; "Шешім " &lt;&lt; iter &lt;&lt; " қадамда табылды:\n";
+    for (int i = 0; i &lt; n; i++) {
+        cout &lt;&lt; "x" &lt;&lt; i+1 &lt;&lt; " = " &lt;&lt; x[i] &lt;&lt; endl;
+    }
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="quiz" class="scroll-mt-24 space-y-8">
+            <div class="border-b border-slate-200 dark:border-slate-800 pb-4">
+                <span class="text-indigo-600 dark:text-indigo-400 font-semibold text-sm uppercase tracking-wider">05 Бөлім</span>
+                <h2 class="text-3xl font-bold tracking-tight mt-1">Білімді тексеру квизі</h2>
+            </div>
+
+            <div class="glass-card p-6 sm:p-8 rounded-2xl shadow-sm max-w-2xl mx-auto space-y-6">
+                <div id="quizContainer">
+                    <div class="flex justify-between items-center mb-4 text-sm font-medium text-slate-500">
+                        <span id="questionCounter">Сұрақ 1 / 3</span>
+                        <span id="quizScore">Ұпай: 0</span>
+                    </div>
+                    <h3 id="questionTitle" class="text-xl font-semibold mb-6">Жай итерация әдісінің жинақтылық шарты қандай?</h3>
+                    <div id="optionsContainer" class="space-y-3">
+                        <!-- Options generated by JS -->
+                    </div>
+                </div>
+                <div id="quizResult" class="hidden text-center space-y-4">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">
+                        <i class="fa-solid fa-trophy"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold">Квиз аяқталды!</h3>
+                    <p id="finalScoreText" class="text-slate-600 dark:text-slate-300"></p>
+                    <button id="restartQuizBtn" class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition">
+                        Қайта бастау
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="glass-card border-t border-slate-200 dark:border-slate-800 mt-20 py-8 text-center text-sm text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-2">
+            <p>Сызықтық алгебралық теңдеулер жүйесін сандық әдістермен шешу — 3 курс студенттеріне арналған интерактивті оқу құралы.</p>
+            <p>&copy; 2026 Барлық құқықтар қорғалған.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme Toggle functionality
+        const themeToggle = document.getElementById('themeToggle');
+        const htmlElement = document.documentElement;
+        
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlElement.classList.add('dark');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            localStorage.setItem('theme', htmlElement.classList.contains('dark') ? 'dark' : 'light');
+        });
+
+        // Mobile Menu Toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        mobileMenuBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Dynamic Matrix Inputs generation
+        const matrixSizeSelect = document.getElementById('matrixSize');
+        const matrixInputsContainer = document.getElementById('matrixInputs');
+
+        function generateMatrixInputs() {
+            const size = parseInt(matrixSizeSelect.value);
+            matrixInputsContainer.innerHTML = '';
+            
+            // Default values for 3x3 or 2x2
+            const defaults3x3 = [
+                [10, -1, 1, 6],
+                [1, 10, -1, 10],
+                [2, 2, 10, 14]
+            ];
+            const defaults2x2 = [
+                [10, -2, 6],
+                [-1, 10, 7]
+            ];
+            const defaults = size === 3 ? defaults3x3 : defaults2x2;
+
+            for (let i = 0; i < size; i++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex items-center space-x-2';
+                for (let j = 0; j < size; j++) {
+                    rowDiv.innerHTML += `
+                        <input type="number" step="any" value="${defaults[i][j]}" data-row="${i}" data-col="${j}" class="matrix-input w-16 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-center text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span class="text-xs text-slate-500">x<sub>${j+1}</sub></span>
+                        ${j < size - 1 ? '<span class="text-xs">+</span>' : ''}
+                    `;
+                }
+                rowDiv.innerHTML += `
+                    <span class="text-xs">=</span>
+                    <input type="number" step="any" value="${defaults[i][size]}" data-rhs="${i}" class="rhs-input w-16 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-center text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                `;
+                matrixInputsContainer.appendChild(rowDiv);
+            }
+            document.getElementById('x3Header').style.display = size === 3 ? 'table-cell' : 'none';
+        }
+
+        matrixSizeSelect.addEventListener('change', generateMatrixInputs);
+        generateMatrixInputs();
+
+        // Chart Instance
+        let iterationChart = null;
+
+        // Solver Logic
+        const solveBtn = document.getElementById('solveBtn');
+        solveBtn.addEventListener('click', () => {
+            const size = parseInt(matrixSizeSelect.value);
+            const eps = parseFloat(document.getElementById('epsilon').value) || 0.001;
+            const maxIter = parseInt(document.getElementById('maxIter').value) || 50;
+
+            // Collect A and b
+            let A = Array(size).fill(0).map(() => Array(size).fill(0));
+            let b = Array(size).fill(0);
+
+            const matrixInputs = document.querySelectorAll('.matrix-input');
+            matrixInputs.forEach(input => {
+                const r = parseInt(input.getAttribute('data-row'));
+                const c = parseInt(input.getAttribute('data-col'));
+                A[r][c] = parseFloat(input.value) || 0;
+            });
+
+            const rhsInputs = document.querySelectorAll('.rhs-input');
+            rhsInputs.forEach(input => {
+                const r = parseInt(input.getAttribute('data-rhs'));
+                b[r] = parseFloat(input.value) || 0;
+            });
+
+            // Convert to iteration form: x_i = (b_i - sum_{j!=i} A_ij * x_j) / A_ii
+            let x = Array(size).fill(0.0);
+            let history = [];
+            let converged = false;
+            let finalIter = 0;
+
+            for (let iter = 0; iter < maxIter; iter++) {
+                let x_new = Array(size).fill(0.0);
+                let maxDiff = 0.0;
+
+                for (let i = 0; i < size; i++) {
+                    if (Math.abs(A[i][i]) < 1e-9) {
+                        alert('Диагональ элементі нөлге тең немесе тым кішкентай! Жүйені өзгертіңіз.');
+                        return;
+                    }
+                    let sum = 0;
+                    for (let j = 0; j < size; j++) {
+                        if (i !== j) {
+                            sum += A[i][j] * x[j];
+                        }
+                    }
+                    x_new[i] = (b[i] - sum) / A[i][i];
+                    maxDiff = Math.max(maxDiff, Math.abs(x_new[i] - x[i]));
+                }
+
+                history.push({ iter: iter + 1, vals: [...x_new], diff: maxDiff });
+                x = x_new;
+                finalIter = iter + 1;
+
+                if (maxDiff < eps) {
+                    converged = true;
+                    break;
+                }
+            }
+
+            // Render table results
+            const resultBody = document.getElementById('resultBody');
+            resultBody.innerHTML = '';
+            
+            history.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="p-3 font-semibold text-indigo-600">${item.iter}</td>
+                    <td class="p-3">${item.vals[0].toFixed(4)}</td>
+                    <td class="p-3">${item.vals[1].toFixed(4)}</td>
+                    ${size === 3 ? `<td class="p-3">${item.vals[2].toFixed(4)}</td>` : ''}
+                    <td class="p-3 text-slate-500">${item.diff.toFixed(5)}</td>
+                `;
+                resultBody.appendChild(row);
+            });
+
+            const statusEl = document.getElementById('solverStatus');
+            if (converged) {
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 mr-1"></i> Жүйе сәтті жинақталды (${finalIter} қадам)!`;
+            } else {
+                statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i> Максималды қадам санына жетті немесе баяу жинақталады.`;
+            }
+
+            // Render Chart
+            const ctx = document.getElementById('iterationChart').getContext('2d');
+            if (iterationChart) {
+                iterationChart.destroy();
+            }
+
+            const labels = history.map(h => `Қадам ${h.iter}`);
+            const datasetX1 = history.map(h => h.vals[0]);
+            const datasetX2 = history.map(h => h.vals[1]);
+            const datasetX3 = size === 3 ? history.map(h => h.vals[2]) : null;
+
+            let datasets = [
+                {
+                    label: 'x₁',
+                    data: datasetX1,
+                    borderColor: '#6366f1',
+                    backgroundColor: '#6366f1',
+                    tension: 0.2
+                },
+                {
+                    label: 'x₂',
+                    data: datasetX2,
+                    borderColor: '#ec4899',
+                    backgroundColor: '#ec4899',
+                    tension: 0.2
+                }
+            ];
+
+            if (size === 3) {
+                datasets.push({
+                    label: 'x₃',
+                    data: datasetX3,
+                    borderColor: '#10b981',
+                    backgroundColor: '#10b981',
+                    tension: 0.2
+                });
+            }
+
+            iterationChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { grid: { color: 'rgba(150, 150, 150, 0.1)' } },
+                        x: { grid: { color: 'rgba(150, 150, 150, 0.1)' } }
+                    }
+                }
+            });
+        });
+
+        // Copy C++ Code
+        document.getElementById('copyCodeBtn').addEventListener('click', () => {
+            const codeText = document.getElementById('cppCodeText').innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = codeText;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('C++ коды алмасу буферіне көшірілді!');
+        });
+
+        // Quiz Logic
+        const quizData = [
+            {
+                question: "Жай итерация әдісі арқылы СТЖ шешу кезінде жинақтылықтың негізгі шарты қандай?",
+                options: [
+                    "Итерация матрицасының нормасы 1-ден кіші болуы керек (||B|| < 1)",
+                    "Матрицаның барлық элементтері оң болуы тиіс",
+                    "Бос мүшелер векторы нөлге тең болуы керек",
+                    "Берілген жүйе тек 2x2 өлшемді болуы тиіс"
+                ],
+                correct: 0
+            },
+            {
+                question: "Итерациялық процесте тоқтау шарттарының бірі не?",
+                options: [
+                    "Қадамдар саны міндетті түрде 100-ге тең болуы шарт",
+                    "Екі көршілес жақындашу айырмасының нормасы берілген ε дәлдіктен кіші болуы",
+                    "Барлық x мәндері 1-ге тең болуы",
+                    "Диагональ элементтерінің нөл болуы"
+                ],
+                correct: 1
+            },
+            {
+                question: "Жай итерация әдісі қандай әдістер тобына жатады?",
+                options: [
+                    "Тура әдістер (Точные методы)",
+                    "Сандық жуықтайтын итерациялық әдістер (Итерационные методы)",
+                    "Графикалық әдістер",
+                    "Интегралдық әдістер"
+                ],
+                correct: 1
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+
+        const questionCounter = document.getElementById('questionCounter');
+        const questionTitle = document.getElementById('questionTitle');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const quizContainer = document.getElementById('quizContainer');
+        const quizResult = document.getElementById('quizResult');
+        const finalScoreText = document.getElementById('finalScoreText');
+        const restartQuizBtn = document.getElementById('restartQuizBtn');
+        const quizScore = document.getElementById('quizScore');
+
+        function loadQuestion() {
+            const q = quizData[currentQuestion];
+            questionCounter.textContent = `Сұрақ ${currentQuestion + 1} / ${quizData.length}`;
+            quizScore.textContent = `Ұпай: ${score}`;
+            questionTitle.textContent = q.question;
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'w-full text-left p-4 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 border border-slate-200 dark:border-slate-700 transition font-medium text-sm';
+                btn.textContent = opt;
+                btn.addEventListener('click', () => selectAnswer(index));
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectAnswer(index) {
+            const q = quizData[currentQuestion];
+            const buttons = optionsContainer.querySelectorAll('button');
+            
+            if (index === q.correct) {
+                buttons[index].classList.add('bg-emerald-100', 'dark:bg-emerald-950/50', 'border-emerald-500');
+                score += 10;
+            } else {
+                buttons[index].classList.add('bg-rose-100', 'dark:bg-rose-950/50', 'border-rose-500');
+                buttons[q.correct].classList.add('bg-emerald-100', 'dark:bg-emerald-950/50', 'border-emerald-500');
+            }
+
+            buttons.forEach(btn => btn.disabled = true);
+
+            setTimeout(() => {
+                currentQuestion++;
+                if (currentQuestion < quizData.length) {
+                    loadQuestion();
+                } else {
+                    quizContainer.classList.add('hidden');
+                    quizResult.classList.remove('hidden');
+                    finalScoreText.textContent = `Сіздің жинаған ұпайыңыз: ${score} / ${quizData.length * 10}`;
+                }
+            }, 1200);
+        }
+
+        restartQuizBtn.addEventListener('click', () => {
+            currentQuestion = 0;
+            score = 0;
+            quizResult.classList.add('hidden');
+            quizContainer.classList.remove('hidden');
+            loadQuestion();
+        });
+
+        loadQuestion();
+    </script>
+</body>
+</html>
